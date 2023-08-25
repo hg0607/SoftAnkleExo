@@ -18,6 +18,7 @@ static boolean connected = false;
 static boolean doScan = false;
 static BLERemoteCharacteristic* pRemoteCharacteristic;
 static BLEAdvertisedDevice* myDevice;
+static esp_bd_addr_t* myaddr;
 int led = 8;
 
 static void notifyCallback(
@@ -108,11 +109,17 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
     // if (advertisedDevice.haveServiceUUID() && advertisedDevice.isAdvertisingService(serviceUUID)) 
     if (advertisedDevice.haveName() && (advertisedDevice.getName()=="WT901BLE67"))
     {
-
+      
       BLEDevice::getScan()->stop();
       myDevice = new BLEAdvertisedDevice(advertisedDevice);
       doConnect = true;
       doScan = true;
+
+      BLEAddress address = myDevice->getAddress();
+      esp_bd_addr_t* addr = address.getNative();     
+      esp_err_t re = esp_ble_gap_set_prefer_conn_params(*addr, 6,6,0,200);
+      Serial.println("esp_ble_gap_set_prefer_conn_params result:");
+      Serial.println(re, DEC);
 
     } // Found our server
   } // onResult
@@ -123,7 +130,9 @@ void setup() {
   Serial.begin(115200, SERIAL_8N1, 1, 0);
   // Serial.println("Starting Arduino BLE Client application...");
   BLEDevice::init("BLE-Client");
-  
+  BLEAddress myaddress = BLEDevice::getAddress();
+  myaddr = myaddress.getNative();
+
   pinMode(led, OUTPUT);
   // Retrieve a Scanner and set the callback we want to use to be informed when we
   // have detected a new device.  Specify that we want active scanning and start the
@@ -146,6 +155,17 @@ void loop() {
   if (doConnect == true) {
     if (connectToServer()) {
       // Serial.println("We are now connected to the BLE Server.");
+      esp_gap_conn_params_t conn_params;
+      BLEAddress address = myDevice->getAddress();
+      esp_bd_addr_t* addr = address.getNative();     
+      esp_ble_get_current_conn_params(*addr, &conn_params);
+      Serial.println("server interval:");
+      Serial.println(conn_params.interval, DEC);
+
+      esp_ble_get_current_conn_params(*myaddr, &conn_params);
+      Serial.println("client interval:");
+      Serial.println(conn_params.interval, DEC);
+
     } else {
       // Serial.println("We have failed to connect to the server; there is nothin more we will do.");
     }
