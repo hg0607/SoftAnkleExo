@@ -36,10 +36,21 @@ static void notifyCallback1(
   uint8_t* pData,
   size_t length,
   bool isNotify) {
-    Serial1.write(0X67); //第1个IMU数据包头部增加了标志位0X67，STM32串口中断接收代码需相应修改
-    Serial1.write(pData, length);
+    // Serial1.write(0X67); //第1个IMU数据包头部增加了标志位0X67，STM32串口中断接收代码需相应修改
+    // Serial1.write(pData, length);
     // Serial1.println();
-    
+    uint8_t tmp[21] = {0};
+    tmp[0] = 0x67;
+    for(int i=0; i<length; i++){
+      if(pData[i] == 0x55 && pData[i+1] == 0x61 && i+19 < length){
+        for(int j=1; j<=20; j++){
+          tmp[j] = pData[i+j-1];
+        }
+        Serial1.write(tmp, 21);
+      }
+    }
+
+
     if(count % 6 == 0)
       digitalWrite(led, HIGH);   // turn the LED on 
     else
@@ -51,9 +62,19 @@ static void notifyCallback2(
   uint8_t* pData,
   size_t length,
   bool isNotify) {
-    Serial1.write(0X68); //第2个IMU数据包头部增加了标志位0X68，STM32串口中断接收代码需相应修改
-    Serial1.write(pData, length);
+    // Serial1.write(0X68); //第2个IMU数据包头部增加了标志位0X68，STM32串口中断接收代码需相应修改
+    // Serial1.write(pData, length);
     // Serial1.println();
+    uint8_t tmp[21] = {0};
+    tmp[0] = 0x68;
+    for(int i=0; i<length; i++){
+      if(pData[i] == 0x55 && pData[i+1] == 0x61 && i+19 < length){
+        for(int j=1; j<=20; j++){
+          tmp[j] = pData[i+j-1];
+        }
+        Serial1.write(tmp, 21);
+      }
+    }
 
     if(count % 6 == 3)
       digitalWrite(led, HIGH);   // turn the LED on 
